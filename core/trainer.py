@@ -132,7 +132,7 @@ class Trainer(BaseTrainer):
         )
 
         # Load dictionary of fits
-        self.fits_dict = FitsDict(self.options, self.train_ds)
+        #self.fits_dict = FitsDict(self.options, self.train_ds)
         self.evaluation_accumulators = dict.fromkeys(['pred_j3d', 'target_j3d', 'target_theta', 'pred_verts', 'target_verts'])
 
         # Create renderer
