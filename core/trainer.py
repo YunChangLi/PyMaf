@@ -329,21 +329,22 @@ class Trainer(BaseTrainer):
         gt_vertices = gt_out.vertices
 
         # Get current best fits from the dictionary
-        opt_pose, opt_betas = self.fits_dict[(dataset_name, indices.cpu(), rot_angle.cpu(), is_flipped.cpu())]
-        opt_pose = opt_pose.to(self.device)
-        opt_betas = opt_betas.to(self.device)
+        ##opt_pose, opt_betas = self.fits_dict[(dataset_name, indices.cpu(), rot_angle.cpu(), is_flipped.cpu())]
+        ##opt_pose = opt_pose.to(self.device)
+        ##opt_betas = opt_betas.to(self.device)
 
         # Replace extreme betas with zero betas
-        opt_betas[(opt_betas.abs() > 3).any(dim=-1)] = 0.
+        ##opt_betas[(opt_betas.abs() > 3).any(dim=-1)] = 0.
         # Replace the optimized parameters with the ground truth parameters, if available
-        opt_pose[has_smpl, :] = gt_pose[has_smpl, :]
-        opt_betas[has_smpl, :] = gt_betas[has_smpl, :]
+        ##opt_pose[has_smpl, :] = gt_pose[has_smpl, :]
+        ##opt_betas[has_smpl, :] = gt_betas[has_smpl, :]
 
-        opt_output = self.smpl(betas=opt_betas, body_pose=opt_pose[:,3:], global_orient=opt_pose[:,:3])
-        opt_vertices = opt_output.vertices
-        opt_joints = opt_output.joints
+        ##opt_output = self.smpl(betas=opt_betas, body_pose=opt_pose[:,3:], global_orient=opt_pose[:,:3])
+        ##opt_vertices = opt_output.vertices
+        ##opt_joints = opt_output.joints
 
-        input_batch['verts'] = opt_vertices
+        ###input_batch['verts'] = opt_vertices
+        input_batch['verts'] = gt_vertices
 
         # De-normalize 2D keypoints from [-1,1] to pixel space
         gt_keypoints_2d_orig = gt_keypoints_2d.clone()
@@ -353,7 +354,7 @@ class Trainer(BaseTrainer):
         # by minimizing a weighted least squares loss
         gt_cam_t = estimate_translation(gt_model_joints, gt_keypoints_2d_orig, focal_length=self.focal_length, img_size=self.options.img_res)
 
-        opt_cam_t = estimate_translation(opt_joints, gt_keypoints_2d_orig, focal_length=self.focal_length, img_size=self.options.img_res)
+        ##opt_cam_t = estimate_translation(opt_joints, gt_keypoints_2d_orig, focal_length=self.focal_length, img_size=self.options.img_res)
 
         # get fitted smpl parameters as pseudo ground truth
         valid_fit = self.fits_dict.get_vaild_state(dataset_name, indices.cpu()).to(torch.bool).to(self.device)
@@ -365,13 +366,16 @@ class Trainer(BaseTrainer):
 
         # Render Dense Correspondences
         if self.options.regressor == 'pymaf_net' and cfg.MODEL.PyMAF.AUX_SUPV_ON:
-            gt_cam_t_nr = opt_cam_t.detach().clone()
+            ##gt_cam_t_nr = opt_cam_t.detach().clone()
+            gt_cam_t_nr = gt_cam_t.detach().clone()
             gt_camera = torch.zeros(gt_cam_t_nr.shape).to(gt_cam_t_nr.device)
             gt_camera[:, 1:] = gt_cam_t_nr[:, :2]
             gt_camera[:, 0] = (2. * self.focal_length / self.options.img_res) / gt_cam_t_nr[:, 2]
             iuv_image_gt = torch.zeros((batch_size, 3, cfg.MODEL.PyMAF.DP_HEATMAP_SIZE, cfg.MODEL.PyMAF.DP_HEATMAP_SIZE)).to(self.device)
             if torch.sum(valid_fit.float()) > 0:
-                iuv_image_gt[valid_fit] = self.iuv_maker.verts2iuvimg(opt_vertices[valid_fit], cam=gt_camera[valid_fit])  # [B, 3, 56, 56]
+                iuv_image_gt[valid_fit] = self.iuv_maker.verts2iuvimg(gt_vertices[valid_fit], cam=gt_camera[valid_fit])  # [B, 3, 56, 56]
+                ##iuv_image_gt[valid_fit] = self.iuv_maker.verts2iuvimg(opt_vertices[valid_fit], cam=gt_camera[valid_fit])  # [B, 3, 56, 56]
+
             input_batch['iuv_image_gt'] = iuv_image_gt
 
             uvia_list = iuv_img2map(iuv_image_gt)
@@ -438,7 +442,8 @@ class Trainer(BaseTrainer):
             pred_keypoints_2d = pred_keypoints_2d / (self.options.img_res / 2.)
 
             # Compute loss on SMPL parameters
-            loss_regr_pose, loss_regr_betas = self.smpl_losses(pred_rotmat, pred_betas, opt_pose, opt_betas, valid_fit)
+            ##loss_regr_pose, loss_regr_betas = self.smpl_losses(pred_rotmat, pred_betas, opt_pose, opt_betas, valid_fit)
+            loss_regr_pose, loss_regr_betas = self.smpl_losses(pred_rotmat, pred_betas, gt_pose, gt_betas, valid_fit)
             loss_regr_pose *= cfg.LOSS.POSE_W
             loss_regr_betas *= cfg.LOSS.SHAPE_W
             loss_dict['loss_regr_pose_{}'.format(l_i)] = loss_regr_pose
@@ -457,7 +462,8 @@ class Trainer(BaseTrainer):
 
             # Per-vertex loss for the shape
             if cfg.LOSS.VERT_W > 0:
-                loss_shape = self.shape_loss(pred_vertices, opt_vertices, valid_fit) * cfg.LOSS.VERT_W
+                loss_shape = self.shape_loss(pred_vertices, gt_vertices, valid_fit) * cfg.LOSS.VERT_W
+                ##loss_shape = self.shape_loss(pred_vertices, opt_vertices, valid_fit) * cfg.LOSS.VERT_W
                 loss_dict['loss_shape_{}'.format(l_i)] = loss_shape
 
             # Camera
@@ -479,9 +485,9 @@ class Trainer(BaseTrainer):
 
         # Pack output arguments for tensorboard logging
         output.update({'pred_vertices': pred_vertices.detach(),
-                        'opt_vertices': opt_vertices,
+                        'opt_vertices': gt_vertices, ##
                         'pred_cam_t': pred_cam_t.detach(),
-                        'opt_cam_t': opt_cam_t})
+                        'opt_cam_t': gt_cam_t})  ##
         loss_dict['loss'] = loss.detach().item()
 
         if self.step_count % 100 == 0:
