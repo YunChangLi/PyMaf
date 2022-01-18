@@ -305,10 +305,12 @@ def estimate_translation_np(S, joints_2d, joints_conf, focal_length=5000, img_si
     W = np.diagflat(weight2)
     Q = np.dot(W,Q)
     c = np.dot(W,c)
-
+    print("Q")
+    print(Q)
     # square matrix
     A = np.dot(Q.T,Q)
     b = np.dot(Q.T,c)
+    print("A")
     print(A,"\n")
     print(b,"\n")
 
