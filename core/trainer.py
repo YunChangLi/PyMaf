@@ -352,6 +352,7 @@ class Trainer(BaseTrainer):
 
         # Estimate camera translation given the model joints and 2D keypoints
         # by minimizing a weighted least squares loss
+        print(gt_model_joints,"\n",gt_keypoints_2d_orig)
         gt_cam_t = estimate_translation(gt_model_joints, gt_keypoints_2d_orig, focal_length=self.focal_length, img_size=self.options.img_res)
 
         ##opt_cam_t = estimate_translation(opt_joints, gt_keypoints_2d_orig, focal_length=self.focal_length, img_size=self.options.img_res)
