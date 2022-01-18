@@ -283,7 +283,7 @@ def estimate_translation_np(S, joints_2d, joints_conf, focal_length=5000, img_si
     Returns:
         (3,) camera translation vector
     """
-    print("num_joint :",num_num_joints)
+    print("num_joint :",num_joints)
     num_joints = S.shape[0]
     # focal length
     f = np.array([focal_length,focal_length])
