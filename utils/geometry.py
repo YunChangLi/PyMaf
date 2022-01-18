@@ -309,6 +309,8 @@ def estimate_translation_np(S, joints_2d, joints_conf, focal_length=5000, img_si
     # square matrix
     A = np.dot(Q.T,Q)
     b = np.dot(Q.T,c)
+    print(A,"\n")
+    print(b,"\n")
 
     # solution
     trans = np.linalg.solve(A, b)
