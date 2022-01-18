@@ -284,7 +284,7 @@ class PyMAF(nn.Module):
         vis_feat_list = [s_feat.detach()]
 
 
-        smpl_output['verts'] = skeleton_extract(batch_size, smpl_output['smpl_kp_3d'], smpl_output['verts'])
+        #smpl_output['verts'] = skeleton_extract(batch_size, smpl_output['smpl_kp_3d'], smpl_output['verts'])
 
         # parameter predictions
         for rf_i in range(cfg.MODEL.PyMAF.N_ITER):
