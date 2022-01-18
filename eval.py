@@ -374,10 +374,10 @@ if __name__ == '__main__':
         strict = args.regressor != 'hmr'
         model.load_state_dict(checkpoint['model'], strict=strict)
 
-    model.eval()
+    #model.eval()
 
     # Setup evaluation dataset
-    dataset = BaseDataset(args, args.dataset, is_train=False)
+    #dataset = BaseDataset(args, args.dataset, is_train=False)
 
     # Run evaluation
-    run_evaluation(model, dataset)
+    #run_evaluation(model, dataset)
