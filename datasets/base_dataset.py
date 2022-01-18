@@ -217,7 +217,7 @@ class BaseDataset(Dataset):
 
     def __getitem__(self, index):
         item = {}
-        scale = self.scale[index].copy()
+        scale = float(self.scale[index].copy())
         center = self.center[index].copy()
 
         # Get augmentation parameters
